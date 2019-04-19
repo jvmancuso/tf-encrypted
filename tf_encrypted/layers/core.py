@@ -29,13 +29,13 @@ class Layer(ABC):
         pass
 
     @abstractmethod
-    def forward(
+    def call(
         self,
         *args: Any,
         **kwargs: Any
     ) -> Optional[TFEVariable]:
         """
-        Forward pass for inference
+        Performs a single forward pass for the layer, building it if needed.
         """
         pass
 
@@ -46,7 +46,7 @@ class Layer(ABC):
         **kwargs: Any
     ) -> Optional[TFEVariable]:
         """
-        The backward pass for training.
+        Performs the derivative for this layer, according to the chain rule.
         """
         pass
 
