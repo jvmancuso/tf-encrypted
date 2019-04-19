@@ -19,3 +19,8 @@ required_space_to_batch_paddings:
     tf.required_space_to_batch_paddings
   hyperlink:
     https://www.tensorflow.org/api_docs/python/tf/required_space_to_batch_paddings
+batch_normalization_v1:
+  interiors:
+    - FusedBatchNorm
+    - moving_mean
+    - moving_variance

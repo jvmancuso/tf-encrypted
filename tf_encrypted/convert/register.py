@@ -167,6 +167,12 @@ def keras_conv2d(converter, interiors, inputs):
     return out
 
 
+def keras_batchnorm(converter, interiors, inputs):
+    input = converter.outputs[inputs[0]]
+
+    print(interiors)
+
+
 def relu(converter, node: Any, inputs: List[str]) -> Any:
     input = converter.outputs[inputs[0]]
 

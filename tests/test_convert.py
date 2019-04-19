@@ -11,7 +11,7 @@ from tensorflow.python.platform import gfile
 from tensorflow.python.framework import graph_util
 from tensorflow.python.framework import graph_io
 from tensorflow.keras import backend as K
-from tensorflow.keras.layers import Flatten, Conv2D
+from tensorflow.keras.layers import Flatten, Conv2D, BatchNormalization
 from tensorflow.keras.models import Sequential
 
 import tf_encrypted as tfe
@@ -218,6 +218,13 @@ class TestConvert(unittest.TestCase):
     def test_keras_conv2d_convert(self):
         test_input = np.ones([1, 8, 8, 1])
         self._test_with_ndarray_input_fn('keras_conv2d', test_input, protocol='Pond')
+
+    def test_keras_batchnorm_convert(self):
+        test_input = np.ones([2, 3, 3, 4])
+        self._test_with_ndarray_input_fn('keras_batchnorm', test_input, protocol='Pond')
+
+        test_input_smol = np.ones([2, 4])
+        self._test_with_ndarray_input_fn('keras_batchnorm', test_input_smol, protocol='Pond')
 
 
 def export_argmax(filename, input_shape, axis):
@@ -687,6 +694,34 @@ def _keras_conv2d_core(shape=None, input=None):
                  use_bias=False,
                  input_shape=shape[1:])
     model.add(c2d)
+
+    if input is None:
+        input = np.random.uniform(size=shape)
+    out = model.predict(input)
+    return model, out
+
+
+def export_keras_batchnorm(filname, input_shape, **kwargs):
+    model, _ = _keras_batchnorm_core(shape=input_shape, **kwargs)
+
+    sess = K.get_session()
+    output = model.get_layer('batch_normalization_v1').output
+    return export(output, filename, sess=sess)
+
+
+def run_keras_batchnorm(input):
+    _, out = _keras_batchnorm_core(input=input)
+    return out
+
+
+def _keras_batchnorm_core(shape=None, input=None, **kwargs):
+    assert shape is None or input is None
+    if shape is None:
+        shape = input.shape
+
+    model = Sequential()
+    bn = BatchNormalization(input_shape=shape, **kwargs)
+    model.add(bn)
 
     if input is None:
         input = np.random.uniform(size=shape)
