@@ -102,6 +102,59 @@ class Layer(ABC):
   def inbound_nodes(self):
     return self._inbound_nodes
 
+  def _add_inbound_node(self,
+                        input_tensors,
+                        output_tensors,
+                        arguments=None):
+    """Internal method to create an inbound node for the layer.
+    Arguments:
+        input_tensors: list of input tensors.
+        output_tensors: list of output tensors.
+        arguments: dictionary of keyword arguments that were passed to the
+            `call` method of the layer at the call that created the node.
+    """
+    # pylint: disable=protected-access
+    inbound_layers = nest.map_structure(lambda t: t._keras_history.layer,
+                                        input_tensors)
+    node_indices = nest.map_structure(lambda t: t._keras_history.node_index,
+                                      input_tensors)
+    tensor_indices = nest.map_structure(lambda t: t._keras_history.tensor_index,
+                                        input_tensors)
+    # pylint: enable=protected-access
+
+    # Create node, add it to inbound nodes.
+    Node(
+        self,
+        inbound_layers=inbound_layers,
+        node_indices=node_indices,
+        tensor_indices=tensor_indices,
+        input_tensors=input_tensors,
+        output_tensors=output_tensors,
+        arguments=arguments)
+
+    # Update tensor history metadata.
+    # The metadata attribute consists of
+    # 1) a layer instance
+    # 2) a node index for the layer
+    # 3) a tensor index for the node.
+    # The allows layer reuse (multiple nodes per layer) and multi-output
+    # or multi-input layers (e.g. a layer can return multiple tensors,
+    # and each can be sent to a different layer).
+    for i, tensor in enumerate(nest.flatten(output_tensors)):
+      tensor._keras_history = KerasHistory(self,  # pylint: disable=protected-access
+                                           len(self._inbound_nodes) - 1, i)
+
+  def _init_set_name(self, name, zero_based=True):
+    if not name:
+      self._name = backend.unique_object_name(
+          generic_utils.to_snake_case(self.__class__.__name__),
+          zero_based=zero_based)
+    else:
+      self._name = name
+
+  def _name_scope(self):
+    return self.name
+
 
 class Node:
   """A `Node` describes the connectivity between two layers.
@@ -196,48 +249,6 @@ class Node:
     # For compatibility with external Keras, we use the deprecated
     # accessor here.
     outbound_layer.inbound_nodes.append(self)
-
-  def _add_inbound_node(self,
-                        input_tensors,
-                        output_tensors,
-                        arguments=None):
-    """Internal method to create an inbound node for the layer.
-    Arguments:
-        input_tensors: list of input tensors.
-        output_tensors: list of output tensors.
-        arguments: dictionary of keyword arguments that were passed to the
-            `call` method of the layer at the call that created the node.
-    """
-    # pylint: disable=protected-access
-    inbound_layers = nest.map_structure(lambda t: t._keras_history.layer,
-                                        input_tensors)
-    node_indices = nest.map_structure(lambda t: t._keras_history.node_index,
-                                      input_tensors)
-    tensor_indices = nest.map_structure(lambda t: t._keras_history.tensor_index,
-                                        input_tensors)
-    # pylint: enable=protected-access
-
-    # Create node, add it to inbound nodes.
-    Node(
-        self,
-        inbound_layers=inbound_layers,
-        node_indices=node_indices,
-        tensor_indices=tensor_indices,
-        input_tensors=input_tensors,
-        output_tensors=output_tensors,
-        arguments=arguments)
-
-    # Update tensor history metadata.
-    # The metadata attribute consists of
-    # 1) a layer instance
-    # 2) a node index for the layer
-    # 3) a tensor index for the node.
-    # The allows layer reuse (multiple nodes per layer) and multi-output
-    # or multi-input layers (e.g. a layer can return multiple tensors,
-    # and each can be sent to a different layer).
-    for i, tensor in enumerate(nest.flatten(output_tensors)):
-      tensor._keras_history = KerasHistory(self,  # pylint: disable=protected-access
-                                           len(self._inbound_nodes) - 1, i)
 
   def iterate_inbound(self):
     """Returns a list of tuples representing the inbound data.
