@@ -1,7 +1,6 @@
 """Includes base classes used by all layer types."""
-from abc import ABC, abstractmethod
+from abc import ABC
 
-from tensorflow.python.keras import backend
 from tensorflow.python.keras.utils import generic_utils
 from tensorflow.python.keras.engine import base_layer_utils
 
@@ -39,11 +38,14 @@ class Layer(ABC):
       if kwarg not in allowed_kwargs:
         raise TypeError('Keyword argument not understood:', kwarg)
 
+    if 'batch_input_shape' in kwargs:
+      self._batch_input_shape = kwargs['batch_input_shape']
+
     self.trainable = trainable
     self._init_set_name(name)
     self.built = False
 
-  def build(self, input_shape):
+  def build(self, input_shape):  # pylint: disable=unused-argument
     """Creates the variables of the layer (optional, for subclass implementers).
     This is a method that implementers of subclasses of `Layer`
     can override if they need a state-creation step in-between

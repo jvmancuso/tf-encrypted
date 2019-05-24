@@ -1,6 +1,7 @@
 """Sequential model API."""
-
+import tf_encrypted as tfe
 from tf_encrypted.keras.engine.base_layer import Layer
+from tf_encrypted.keras.engine.input_layer import InputLayer, Input
 
 
 class Sequential(Layer):
@@ -10,6 +11,9 @@ class Sequential(Layer):
   """
   def __init__(self, layers=None, name=None):
     super(Sequential, self).__init__(name=name)
+
+    self._layers = []
+    print("seq__init__", tfe.protocol.protocol.__PROTOCOL__)
 
     # Add to the model any layers passed to the constructor.
     if layers:
@@ -28,6 +32,7 @@ class Sequential(Layer):
             multiple output tensors, or is already connected
             somewhere else (forbidden in `Sequential` models).
     """
+    print("seq_add", tfe.protocol.protocol.__PROTOCOL__)
     if not isinstance(layer, Layer):
       raise TypeError('The added layer must be '
                       'an instance of class Layer. '
@@ -48,7 +53,7 @@ class Sequential(Layer):
       # This will build the current layer
       # and create the node connecting the current layer
       # to the input layer we just created.
-      y = [layer(x)]
+      y = layer(x)
 
       # If an input layer (placeholder) is available.
       if isinstance(y, (tuple, list)):
@@ -83,13 +88,12 @@ class Sequential(Layer):
       # During each iteration, `inputs` are the inputs to `layer`, and `outputs`
       # are the outputs of `layer` applied to `inputs`. At the end of each
       # iteration `inputs` is set to `outputs` to prepare for the next layer.
-      outputs = layer(inputs, **kwargs)
+      outputs = layer(inputs)
 
       # `outputs` will be the inputs to the next layer.
       inputs = outputs
 
     return outputs
-
 
   @property
   def layers(self):

@@ -84,10 +84,13 @@ class Dense(Layer):
           arg_not_impl_msg.format(" bias_constraint", "Dense"),
       )
 
+    print("init", self.prot)
+
   def compute_output_shape(self, input_shape):
     return [input_shape[0], self.units]
 
   def build(self, input_shape):
+    print("building", self.prot)
 
     rank = len(input_shape)
 
@@ -110,6 +113,7 @@ class Dense(Layer):
     self.built = True
 
   def call(self, inputs):
+    print("calling")
 
     if self.use_bias:
       outputs = inputs.matmul(self.kernel) + self.bias
