@@ -38,7 +38,6 @@ class Layer(ABC):
     self.trainable = trainable
     self.built = False
 
-  @abstractmethod
   def build(self, input_shape):
     """Creates the variables of the layer (optional, for subclass implementers).
     This is a method that implementers of subclasses of `Layer`
@@ -52,7 +51,6 @@ class Layer(ABC):
     """
     self.built = True
 
-  @abstractmethod
   def call(self, inputs):
     """This is where the layer's logic lives.
     Arguments:
@@ -62,7 +60,6 @@ class Layer(ABC):
     """
     return inputs
 
-  @abstractmethod
   def compute_output_shape(self, input_shape):
     """Returns the layer's output shape"""
 

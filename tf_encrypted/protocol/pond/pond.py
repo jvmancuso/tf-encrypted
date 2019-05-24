@@ -1794,7 +1794,7 @@ class PondPrivatePlaceholder(PondPrivateTensor):
     super(PondPrivatePlaceholder, self).__init__(
         prot, tensor0, tensor1, is_scaled
     )
-    self.placeholders = placeholder.backing
+    self.placeholder = placeholder
     self.tensor0 = tensor0
     self.tensor1 = tensor1
 
@@ -1806,7 +1806,10 @@ class PondPrivatePlaceholder(PondPrivateTensor):
 
     enc = self.prot._encode(value, self.is_scaled)  # pylint: disable=protected-access
     v = self.prot.tensor_factory.tensor(enc)
-    return {p: v for p, v in zip(self.placeholders, v.backing)}
+    try:
+      return {p: v for p, v in zip(self.placeholder.backing, v.backing)}
+    except AttributeError:
+      return {self.placeholder.placeholder: value}
 
 
 class PondPublicVariable(PondPublicTensor):
