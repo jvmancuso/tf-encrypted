@@ -65,12 +65,13 @@ class InputLayer(Layer):
       input_shape = (input_shape,)
 
     if input_shape is not None:
-      batch_input_shape = (batch_size,) + tuple(input_shape)
+      self._batch_input_shape = (batch_size,) + tuple(input_shape)
     else:
-      batch_input_shape = None
+      raise ValueError("Input shape must be defined for the first layer.")
     with get_protocol() as prot:
       # Create a graph placeholder to call the layer on.
-      self.placeholder = prot.define_private_placeholder(batch_input_shape)
+      self.placeholder = prot.define_private_placeholder(
+          self._batch_input_shape)
 
 
 def Input(  # pylint: disable=invalid-name

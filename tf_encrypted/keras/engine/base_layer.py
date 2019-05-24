@@ -1,6 +1,10 @@
 """Includes base classes used by all layer types."""
 from abc import ABC, abstractmethod
 
+from tensorflow.python.keras import backend
+from tensorflow.python.keras.utils import generic_utils
+from tensorflow.python.keras.engine import base_layer_utils
+
 from tf_encrypted import get_protocol
 
 
@@ -21,7 +25,7 @@ class Layer(ABC):
     input tensors (which should be passed in as the first argument).
   """
 
-  def __init__(self, trainable=True, **kwargs):
+  def __init__(self, trainable=True, name=None, **kwargs):
 
     allowed_kwargs = {
         'input_shape',
@@ -36,6 +40,7 @@ class Layer(ABC):
         raise TypeError('Keyword argument not understood:', kwarg)
 
     self.trainable = trainable
+    self._init_set_name(name)
     self.built = False
 
   def build(self, input_shape):
@@ -85,3 +90,15 @@ class Layer(ABC):
   @property
   def prot(self):
     return get_protocol()
+
+  @property
+  def name(self):
+    return self._name
+
+  def _init_set_name(self, name, zero_based=True):
+    if not name:
+      self._name = base_layer_utils.unique_layer_name(
+          generic_utils.to_snake_case(self.__class__.__name__),
+          zero_based=zero_based)
+    else:
+      self._name = name
